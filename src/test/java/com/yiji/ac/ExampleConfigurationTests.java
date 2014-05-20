@@ -5,10 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.activiti.engine.FormService;
-import org.activiti.engine.HistoryService;
-import org.activiti.engine.IdentityService;
-import org.activiti.engine.ManagementService;
 import org.activiti.engine.ProcessEngine;
 import org.activiti.engine.ProcessEngines;
 import org.activiti.engine.RepositoryService;
@@ -16,11 +12,12 @@ import org.activiti.engine.RuntimeService;
 import org.activiti.engine.TaskService;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
-import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -30,29 +27,32 @@ public class ExampleConfigurationTests {
 	
 	private static Logger logger = LoggerFactory.getLogger(ExampleConfigurationTests.class);
 	
-	private static ProcessEngine processEngine;
+	@Autowired
+	private RuntimeService runtimeService;
+	@Autowired
+	private TaskService taskService;
+	@Autowired
+	private ProcessEngine processEngine;
 	
-	@BeforeClass
-	public static void setUp() {
-		processEngine = ProcessEngines.getDefaultProcessEngine();
-	}
+	@Autowired
+	RepositoryService repositoryService;
 	
 	@Test
-	public void testActivi() throws Exception {
-		
-		RuntimeService runtimeService = processEngine.getRuntimeService();
-		RepositoryService repositoryService = processEngine.getRepositoryService();
-		TaskService taskService = processEngine.getTaskService();
-		ManagementService managementService = processEngine.getManagementService();
-		IdentityService identityService = processEngine.getIdentityService();
-		HistoryService historyService = processEngine.getHistoryService();
-		FormService formService = processEngine.getFormService();
+	public void deployProcessDefinition1() {
+		repositoryService.deleteDeployment("101");
+//		repositoryService.createDeployment()
+//			.addClasspathResource("org/activiti/test/VacationRequest.bpmn20.xml").deploy();
+//		
+//		logger.info("Number of process definitions: "
+//					+ repositoryService.createProcessDefinitionQuery().count());
 	}
+	
 	
 	/**
 	 * 部署流程定义
 	 */
 	@Test
+//	@Ignore
 	public void deployProcessDefinition() {
 		ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
 		RepositoryService repositoryService = processEngine.getRepositoryService();
@@ -67,7 +67,7 @@ public class ExampleConfigurationTests {
 	 * 请假流程
 	 */
 	@Test
-	public void startProcessInstance() {
+	public void startAndCompleteProcessInstance() {
 		//1.员工启动流程实例
 		String employeeName = "Kermit";
 		String management = "management";
@@ -76,14 +76,12 @@ public class ExampleConfigurationTests {
 		variables.put("numberOfDays", new Integer(4));
 		variables.put("vacationMotivation", "I'm really tired!");
 		
-		RuntimeService runtimeService = processEngine.getRuntimeService();
 		ProcessInstance processInstance = runtimeService.startProcessInstanceByKey(
 			"vacationRequest", variables);
 		logger.info("{}发起请假流程:{}", employeeName, variables);
 		logger.info("当前流程实例数: " + runtimeService.createProcessInstanceQuery().count());
 		
 		//2.管理员拒绝员工请假
-		TaskService taskService = processEngine.getTaskService();
 		List<Task> tasks = taskService.createTaskQuery().taskCandidateGroup(management).list();
 		for (Task task : tasks) {
 			logger.info("{} 待处理任务: {}: ", management, task.getName());

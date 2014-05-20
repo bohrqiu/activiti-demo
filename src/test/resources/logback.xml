@@ -21,7 +21,7 @@
     </appender>
     
     <logger name="com.yiji" level="info"></logger>
-    <root level="warn">
+    <root level="info">
         <appender-ref ref="STDOUT"/>
     </root>
 
